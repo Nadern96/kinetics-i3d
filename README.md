@@ -88,8 +88,9 @@ The preprocessing file can be run using
 
 Ex: 
 
-  python preprocessing.py --video_path "VID_NaderSquat.mp4"
+ $ python preprocessing.py --video_path "VID_NaderSquat.mp4"
  `
+
 This will convert the video to a numpy array in the data/ directory 
 with the name "VID_NaderSquat_rgb.npy"
 
@@ -109,6 +110,7 @@ replace _SAMPLE_PATHS in evaluate_sample.py with the path
 of your video numpyarray
 
 Then run evaluate_Sample.py
+
 $ python preprocessing.py
 ` 
  
