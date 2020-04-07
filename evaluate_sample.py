@@ -25,10 +25,8 @@ import i3d
 
 _IMAGE_SIZE = 224
 
-_SAMPLE_VIDEO_FRAMES = 79
 _SAMPLE_PATHS = {
-    'rgb': 'data/v_CricketShot_g04_c01_rgb.npy',
-    'flow': 'data/v_CricketShot_g04_c01_flow.npy',
+    'rgb': 'data/cricket_rgb.npy',
 }
 
 _CHECKPOINT_PATHS = {
@@ -40,7 +38,6 @@ _CHECKPOINT_PATHS = {
 }
 
 _LABEL_MAP_PATH = 'data/label_map.txt'
-_LABEL_MAP_PATH_600 = 'data/label_map_600.txt'
 
 FLAGS = tf.flags.FLAGS
 
@@ -55,22 +52,17 @@ def main(unused_argv):
   imagenet_pretrained = FLAGS.imagenet_pretrained
 
   NUM_CLASSES = 400
-  if eval_type == 'rgb600':
-    NUM_CLASSES = 600
 
   if eval_type not in ['rgb', 'rgb600', 'flow', 'joint']:
     raise ValueError('Bad `eval_type`, must be one of rgb, rgb600, flow, joint')
 
-  if eval_type == 'rgb600':
-    kinetics_classes = [x.strip() for x in open(_LABEL_MAP_PATH_600)]
-  else:
-    kinetics_classes = [x.strip() for x in open(_LABEL_MAP_PATH)]
+  kinetics_classes = [x.strip() for x in open(_LABEL_MAP_PATH)]
 
   if eval_type in ['rgb', 'rgb600', 'joint']:
     # RGB input has 3 channels.
     rgb_input = tf.placeholder(
         tf.float32,
-        shape=(1, _SAMPLE_VIDEO_FRAMES, _IMAGE_SIZE, _IMAGE_SIZE, 3))
+        shape=(None, None, _IMAGE_SIZE, _IMAGE_SIZE, 3))
 
 
     with tf.variable_scope('RGB'):
@@ -91,30 +83,11 @@ def main(unused_argv):
 
     rgb_saver = tf.train.Saver(var_list=rgb_variable_map, reshape=True)
 
-  if eval_type in ['flow', 'joint']:
-    # Flow input has only 2 channels.
-    flow_input = tf.placeholder(
-        tf.float32,
-        shape=(1, _SAMPLE_VIDEO_FRAMES, _IMAGE_SIZE, _IMAGE_SIZE, 2))
-    with tf.variable_scope('Flow'):
-      flow_model = i3d.InceptionI3d(
-          NUM_CLASSES, spatial_squeeze=True, final_endpoint='Logits')
-      flow_logits, _ = flow_model(
-          flow_input, is_training=False, dropout_keep_prob=1.0)
-    flow_variable_map = {}
-    for variable in tf.global_variables():
-      if variable.name.split('/')[0] == 'Flow':
-        flow_variable_map[variable.name.replace(':0', '')] = variable
-    flow_saver = tf.train.Saver(var_list=flow_variable_map, reshape=True)
-
-  if eval_type == 'rgb' or eval_type == 'rgb600':
-    model_logits = rgb_logits
-  elif eval_type == 'flow':
-    model_logits = flow_logits
-  else:
-    model_logits = rgb_logits + flow_logits
+ 
+  model_logits = rgb_logits 
   model_predictions = tf.nn.softmax(model_logits)
-
+  
+  #restore the model weights from the checkpoints
   with tf.Session() as sess:
     feed_dict = {}
     if eval_type in ['rgb', 'rgb600', 'joint']:
@@ -125,31 +98,39 @@ def main(unused_argv):
       tf.logging.info('RGB checkpoint restored')
       rgb_sample = np.load(_SAMPLE_PATHS['rgb'])
       tf.logging.info('RGB data loaded, shape=%s', str(rgb_sample.shape))
-      feed_dict[rgb_input] = rgb_sample
+      
+      
+      #Convert long video to a list of short sample videos 
+      sample_frame = 120
+      sample_list = []
 
-    if eval_type in ['flow', 'joint']:
-      if imagenet_pretrained:
-        flow_saver.restore(sess, _CHECKPOINT_PATHS['flow_imagenet'])
-      else:
-        flow_saver.restore(sess, _CHECKPOINT_PATHS['flow'])
-      tf.logging.info('Flow checkpoint restored')
-      flow_sample = np.load(_SAMPLE_PATHS['flow'])
-      tf.logging.info('Flow data loaded, shape=%s', str(flow_sample.shape))
-      feed_dict[flow_input] = flow_sample
+      for x in range(int(rgb_sample.shape[0]/sample_frame)):
+        sample_list.append(rgb_sample[x*sample_frame:(x+1)*sample_frame])
 
-    out_logits, out_predictions = sess.run(
-        [model_logits, model_predictions],
-        feed_dict=feed_dict)
+      if len(sample_list) == 0 :
+        sample_list.append(rgb_sample)
 
-    out_logits = out_logits[0]
-    out_predictions = out_predictions[0]
-    sorted_indices = np.argsort(out_predictions)[::-1]
+      # Run the i3d model on the list of videos and print the top 5 actions of every video.
+      # First add an empty dimension to the sample video as the model takes as input
+      # a batch of videos.
+      for x in sample_list:
+          model_input = np.expand_dims(x, axis=0)
+          feed_dict[rgb_input] = model_input
 
-    print('Norm of logits: %f' % np.linalg.norm(out_logits))
-    print('\nTop classes and probabilities')
-    for index in sorted_indices[:20]:
-      print(out_predictions[index], out_logits[index], kinetics_classes[index])
+          out_logits, out_predictions = sess.run(
+              [model_logits, model_predictions],
+              feed_dict=feed_dict)
 
+          out_logits = out_logits[0]
+          out_predictions = out_predictions[0]
+          sorted_indices = np.argsort(out_predictions)[::-1]
+
+          print('Norm of logits: %f' % np.linalg.norm(out_logits))
+          print('\nTop 5 classes and probabilities')
+          for index in sorted_indices[:5]:
+            print("%-22s %.2f%%" % (kinetics_classes[index], out_predictions[index] * 100))
+
+          print("************************")
 
 if __name__ == '__main__':
-  tf.app.run(main)
+  tf.compat.v1.app.run (main)
