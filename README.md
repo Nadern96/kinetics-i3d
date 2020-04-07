@@ -78,7 +78,7 @@ RGB-I3D        | 71.1 / 89.3         | 68.4 / 88.0
 Flow-I3D       | 63.4 / 84.9         | 61.5 / 83.4
 Two-Stream I3D | 74.2 / 91.3         | 71.6 / 90.0
 
-### Sample data and preprocessing
+# Sample data and preprocessing
 
 ## preprocessing
 
@@ -87,6 +87,7 @@ The preprocessing file can be run using
 `$ python preprocessing.py --video_path "Path_to the Video"
 
 Ex: 
+
   python preprocessing.py --video_path "VID_NaderSquat.mp4"
  `
 This will convert the video to a numpy array in the data/ directory 
