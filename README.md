@@ -84,12 +84,12 @@ Two-Stream I3D | 74.2 / 91.3         | 71.6 / 90.0
 
 The preprocessing file can be run using
 
-`$ python preprocessing.py --video_path "Path_to the Video"
+`$ python preprocessing.py --video_path "Path_to the Video"  `
 
 Ex: 
 
- $ python preprocessing.py --video_path "VID_NaderSquat.mp4"
- `
+ `$ python preprocessing.py --video_path "VID_NaderSquat.mp4" `
+
 
 This will convert the video to a numpy array in the data/ directory 
 with the name "VID_NaderSquat_rgb.npy"
