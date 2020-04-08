@@ -20,13 +20,23 @@ from __future__ import print_function
 
 import numpy as np
 import tensorflow as tf
-
 import i3d
+
+import random
+import re
+import os
+import tempfile
+import cv2
+import imageio
+#import pyglet
+from IPython import display
+from moviepy.editor import *
+# from urllib import request 
 
 _IMAGE_SIZE = 224
 
 _SAMPLE_PATHS = {
-    'rgb': 'data/VID_NaderKick_rgb.npy',
+    'rgb': 'data/VID_NaderRun_rgb.npy',
 }
 
 _CHECKPOINT_PATHS = {
@@ -104,6 +114,13 @@ def main(unused_argv):
       sample_frame = 120
       sample_list = []
 
+      My_Counter=0
+      My_start=0 
+      My_End=3
+      Output_Videos =[]
+
+      MyVideo_Path ="data/cricket.avi"  # Video path 
+
       for x in range(int(rgb_sample.shape[0]/sample_frame)):
         sample_list.append(rgb_sample[x*sample_frame:(x+1)*sample_frame])
 
@@ -113,6 +130,8 @@ def main(unused_argv):
       # Run the i3d model on the list of videos and print the top 5 actions of every video.
       # First add an empty dimension to the sample video as the model takes as input
       # a batch of videos.
+
+ 
       for x in sample_list:
           model_input = np.expand_dims(x, axis=0)
           feed_dict[rgb_input] = model_input
@@ -125,12 +144,40 @@ def main(unused_argv):
           out_predictions = out_predictions[0]
           sorted_indices = np.argsort(out_predictions)[::-1]
 
-          print('Norm of logits: %f' % np.linalg.norm(out_logits))
-          print('\nTop 5 classes and probabilities')
+          #print('Norm of logits: %f' % np.linalg.norm(out_logits))
+          #print('\nTop 5 classes and probabilities')
+          My_count=0
           for index in sorted_indices[:5]:
-            print("%-22s %.2f%%" % (kinetics_classes[index], out_predictions[index] * 100))
+            #print("%-22s %.2f%%" % (kinetics_classes[index], out_predictions[index] * 100))
+            if My_count ==0 :
+               result_text = kinetics_classes[index]
+               My_count = My_count+1
 
-          print("************************")
+          #print("************************")
+
+          ### make each clip with the action tittled in the middle 
+
+          OutPut_name = "Output_Video" + str(My_Counter)+".mp4"
+          clip = VideoFileClip(MyVideo_Path).subclip(My_start,My_End)
+          txt_clip = ( TextClip(result_text,fontsize=50,color='white')
+              .set_position('bottom')
+              .set_duration(4)
+                )
+          video = CompositeVideoClip([clip, txt_clip])
+          print(OutPut_name)
+          video.write_videofile(str(OutPut_name),fps=25)
+          Output_Videos.append (VideoFileClip(OutPut_name))
+          clip.close()
+          My_Counter=My_Counter+1
+          My_start = My_start +3
+          My_End = My_End +3
+
+  Result_Video = concatenate_videoclips(Output_Videos ,method='compose')
+  Result_Video.write_videofile("Final_Video.mp4",fps=25)
+
+# concatenate all the results clips in one Video 
+ 
+
 
 if __name__ == '__main__':
   tf.compat.v1.app.run (main)
