@@ -101,16 +101,15 @@ Under data/ there are 3 input videos.
 - VID_NaderRun.mp4
 - VID_MultiAction.mp4
 
-And also their numpypy arrays.
+And also cricket_rgb.npy
 
 ## Test with your own video
-`$ python preprocessing.py --video_path "Path_to the Video'
+`$ python preprocessing.py --video_path "Path_to the Video" `
 
 replace _SAMPLE_PATHS in evaluate_sample.py with the path 
 of your video numpyarray
 
 Then run evaluate_Sample.py
 
-$ python preprocessing.py
-` 
+`$ python preprocessing.py` 
  
