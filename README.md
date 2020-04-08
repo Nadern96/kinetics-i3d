@@ -109,7 +109,7 @@ And also cricket_rgb.npy
 replace _SAMPLE_PATHS in evaluate_sample.py with the path 
 of your video numpyarray
 
-Then run evaluate_Sample.py
+Then run evaluate_sample.py
 
-`$ python preprocessing.py` 
+`$ python evaluate_sample.py` 
  
