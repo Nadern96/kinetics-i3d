@@ -26,7 +26,7 @@ import i3d
 _IMAGE_SIZE = 224
 
 _SAMPLE_PATHS = {
-    'rgb': 'data/cricket_rgb.npy',
+    'rgb': 'data/VID_NaderKick_rgb.npy',
 }
 
 _CHECKPOINT_PATHS = {
