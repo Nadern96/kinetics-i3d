@@ -133,12 +133,7 @@ Under data/ there are 3 input videos.
 And also cricket_rgb.npy
 
 ## Test with your own video
-`$ python preprocessing.py --video_path "Path_to the Video" `
 
-replace _SAMPLE_PATHS in evaluate_sample.py with the path 
-of your video numpyarray
+`$ python evaluate_sample.py --video_path "Path_to the Video" `
 
-Then run evaluate_sample.py
-
-`$ python evaluate_sample.py` 
  
