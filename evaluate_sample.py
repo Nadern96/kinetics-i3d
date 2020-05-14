@@ -27,11 +27,16 @@ import re
 import os
 import tempfile
 import cv2
+import argparse
+
+
 import imageio
 #import pyglet
 from IPython import display
 from moviepy.editor import *
 # from urllib import request 
+
+from preprocessing import load_video
 
 _IMAGE_SIZE = 224
 
@@ -51,11 +56,32 @@ _LABEL_MAP_PATH = 'data/label_map.txt'
 
 FLAGS = tf.flags.FLAGS
 
-tf.flags.DEFINE_string('eval_type', 'joint', 'rgb, rgb600, flow, or joint')
+tf.flags.DEFINE_string('eval_type', 'joint', 'rgb, rgb600, flow, or joint',)
 tf.flags.DEFINE_boolean('imagenet_pretrained', True, '')
 
+tf.flags.DEFINE_string('video_path', 'data/VID_NaderRun.mp4', 'path to video',)
 
-def main(unused_argv):
+def main(args):
+  
+
+  if not os.path.exists(args.video_path):
+        print("This file does not exist")
+        return
+  
+  # sample all video from video_path at specified frame rate (FRAME_RATE param)
+  sample_video = load_video(args.video_path)
+
+  # sample_video = np.expand_dims(sample_video, axis=0)
+
+  video_name = args.video_path.split("/")[-1][:-4]
+  npy_rgb_output = 'data/' + video_name + '_rgb.npy'
+  np.save(npy_rgb_output, sample_video)
+
+
+  _SAMPLE_PATHS = {
+    'rgb': npy_rgb_output,
+  }
+
   tf.logging.set_verbosity(tf.logging.INFO)
   eval_type = FLAGS.eval_type
 
@@ -148,36 +174,44 @@ def main(unused_argv):
           #print('\nTop 5 classes and probabilities')
           My_count=0
           for index in sorted_indices[:5]:
-            #print("%-22s %.2f%%" % (kinetics_classes[index], out_predictions[index] * 100))
-            if My_count ==0 :
-               result_text = kinetics_classes[index]
-               My_count = My_count+1
+            print("%-22s %.2f%%" % (kinetics_classes[index], out_predictions[index] * 100))
+            # if My_count ==0 :
+            #    result_text = kinetics_classes[index]
+            #    My_count = My_count+1
 
-          #print("************************")
+          print("************************")
 
-          ### make each clip with the action tittled in the middle 
+#           ### make each clip with the action tittled in the middle 
 
-          OutPut_name = "Output_Video" + str(My_Counter)+".mp4"
-          clip = VideoFileClip(MyVideo_Path).subclip(My_start,My_End)
-          txt_clip = ( TextClip(result_text,fontsize=50,color='white')
-              .set_position('bottom')
-              .set_duration(4)
-                )
-          video = CompositeVideoClip([clip, txt_clip])
-          print(OutPut_name)
-          video.write_videofile(str(OutPut_name),fps=25)
-          Output_Videos.append (VideoFileClip(OutPut_name))
-          clip.close()
-          My_Counter=My_Counter+1
-          My_start = My_start +3
-          My_End = My_End +3
+#           OutPut_name = "Output_Video" + str(My_Counter)+".mp4"
+#           clip = VideoFileClip(MyVideo_Path).subclip(My_start,My_End)
+#           txt_clip = ( TextClip(result_text,fontsize=50,color='white')
+#               .set_position('bottom')
+#               .set_duration(4)
+#                 )
+#           video = CompositeVideoClip([clip, txt_clip])
+#           print(OutPut_name)
+#           video.write_videofile(str(OutPut_name),fps=25)
+#           Output_Videos.append (VideoFileClip(OutPut_name))
+#           clip.close()
+#           My_Counter=My_Counter+1
+#           My_start = My_start +3
+#           My_End = My_End +3
 
-  Result_Video = concatenate_videoclips(Output_Videos ,method='compose')
-  Result_Video.write_videofile("Final_Video.mp4",fps=25)
+#   Result_Video = concatenate_videoclips(Output_Videos ,method='compose')
+#   Result_Video.write_videofile("Final_Video.mp4",fps=25)
 
-# concatenate all the results clips in one Video 
+# # concatenate all the results clips in one Video 
  
 
 
 if __name__ == '__main__':
-  tf.compat.v1.app.run (main)
+
+  parser = argparse.ArgumentParser()
+  parser.add_argument('--video_path', type=str, default="data/VID_NaderRun.mp4")
+
+  args = parser.parse_args()
+  main(args)
+  #tf.compat.v1.app.run (main(args))
+
+  
