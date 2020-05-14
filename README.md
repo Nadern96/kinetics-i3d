@@ -12,6 +12,35 @@ clone this repository using
 
 $ git clone https://github.com/Nadern96/kinetics-i3d
 
+## Create list files
+We use list files in ```data/ucf101/``` subdir to make the code find RGB images and flow data saved on disk. You have to adapt the list files to make sure the list files contain the right path to your data. Specifically, for RGB data, you have to update ```data/ucf101/rgb.txt```. Each line in in this file should be in the format:
+
+```dir_name_of_imgs_of_a_video /path/to/img_dir num_imgs label```
+For example, if your RGB data of UCF101 is saved in '/data/user/ucf101/rgb', and there are 13320 subdirs in this folder, each subdir contains images from a video. If in subdir v_BalanceBeam_g14_c02, there are 96 images, and the ground truth of this video is 4, then the line for this subdir is:
+
+```v_BalanceBeam_g14_c02 /data/user/ucf101/rgb/v_BalanceBeam_g14_c02 96 4```
+Similarly, update data/ucf101/flow.txt for flow data. Note: we use one file to include x and y part of flow data, so we use {：s} in each line to placehold x or y in the data path. For example, if your flow data are placed like this:
+```
+|---tvl1_flow
+|   |---x
+|   |--- y
+```
+then you can write each line in flow.txt like this:
+
+``` v_Archery_g01_c06 /data4/zhouhao/dataset/ucf101/tvl1_flow/{:s}/v_Archery_g01_c06 107 2 ```
+i.e, use {:s} replace x or y in path. If you are confused, please refer our code to see data loading details.
+
+## Train on UCF101 on RGB data and flow data
+### Finetune on split1 of RGB data of UCF101
+```
+CUDA_VISIBLE_DEVICES=0 python finetune.py ucf101 rgb 1
+```
+### Finetune on split2 of flow data of UCF101
+```
+CUDA_VISIBLE_DEVICES=0 python finetune.py ucf101 flow 2
+```
+We share our trained models on UCF101(RGB & FLOW) in GoogleDrive and BaiduDisk (password:ddar). You can download these models and put them in model folder of this repo. In this way you can skip the train commands above and directly run test in the next step.
+
 # Requirements
 
 ```
