@@ -69,8 +69,9 @@ def main(args):
         return
   
   # sample all video from video_path at specified frame rate (FRAME_RATE param)
-  sample_video = load_video(args.video_path)
-
+  sample_video = load_video(args.video_path,1000000000)	
+  MyVideo_Path = args.video_path
+  Video_duration=0
   # sample_video = np.expand_dims(sample_video, axis=0)
 
   video_name = args.video_path.split("/")[-1][:-4]
@@ -137,15 +138,11 @@ def main(args):
       
       
       #Convert long video to a list of short sample videos 
-      sample_frame = 120
+      #MyVideo_Path ="data/cricket.avi"  # Video path 
+      sample_frame = 80
+      Output_Videos =[]
       sample_list = []
 
-      My_Counter=0
-      My_start=0 
-      My_End=3
-      Output_Videos =[]
-
-      MyVideo_Path ="data/cricket.avi"  # Video path 
 
       for x in range(int(rgb_sample.shape[0]/sample_frame)):
         sample_list.append(rgb_sample[x*sample_frame:(x+1)*sample_frame])
@@ -157,51 +154,69 @@ def main(args):
       # First add an empty dimension to the sample video as the model takes as input
       # a batch of videos.
 
- 
+      
+	    My_Counter=0
+      My_clip =VideoFileClip(MyVideo_Path)
+      Video_duration = np.round(My_clip.duration,1) ##### by seconds 
+      Max_video_duration = np.round(Video_duration/len(sample_list),1)
+      My_start=0 
+      My_End=Max_video_duration
+
+      ######  intial values for cutting the long video to short videos 
+
+      
       for x in sample_list:
-          model_input = np.expand_dims(x, axis=0)
-          feed_dict[rgb_input] = model_input
+        model_input = np.expand_dims(x, axis=0)
+        feed_dict[rgb_input] = model_input
 
-          out_logits, out_predictions = sess.run(
-              [model_logits, model_predictions],
-              feed_dict=feed_dict)
+        out_logits, out_predictions = sess.run([model_logits, model_predictions],
+        feed_dict=feed_dict)
 
-          out_logits = out_logits[0]
-          out_predictions = out_predictions[0]
-          sorted_indices = np.argsort(out_predictions)[::-1]
+        out_logits = out_logits[0]
+        out_predictions = out_predictions[0]
+        sorted_indices = np.argsort(out_predictions)[::-1]
 
           #print('Norm of logits: %f' % np.linalg.norm(out_logits))
           #print('\nTop 5 classes and probabilities')
-          My_count=0
-          for index in sorted_indices[:5]:
-            print("%-22s %.2f%%" % (kinetics_classes[index], out_predictions[index] * 100))
-            # if My_count ==0 :
-            #    result_text = kinetics_classes[index]
-            #    My_count = My_count+1
+        My_count=0
+        for index in sorted_indices[:5]:
+            #print("%-22s %.2f%%" % (kinetics_classes[index], out_predictions[index] * 100))
+            if My_count ==0 :
+              result_text = kinetics_classes[index]
+              My_count = My_count+1
+			        break
+        
+        ###### Adding the text of the video action at the bottom .. 
 
-          print("************************")
+        clip = VideoFileClip(MyVideo_Path).subclip(My_start,My_End)
+        txt_clip = ( TextClip(result_text,fontsize=50,color='white')
+              .set_position('bottom')
+              .set_duration(Max_video_duration)
+                )
+        if My_start!=0 and My_start>=Video_duration:
+           break 
+        if My_start!=0 and My_End>=Video_duration:
+            My_End = Video_duration
+        video = CompositeVideoClip([clip, txt_clip])
+        OutPut_name = str(My_Counter)+".mp4"
+        video.write_videofile(OutPut_name,fps=25)
+        Output_Videos.append(VideoFileClip(OutPut_name))
+        clip.close()
+        My_Counter=My_Counter+1
+        My_start = My_start +Max_video_duration
+        My_End = My_End +Max_video_duration
 
-#           ### make each clip with the action tittled in the middle 
+ 
+# concatenate all the results videos 
+      Result_Video = concatenate_videoclips(Output_Videos ,method='compose')
+      Result_Video.write_videofile("output_videos/Multi_10.mp4",fps=25) 
+  
 
-#           OutPut_name = "Output_Video" + str(My_Counter)+".mp4"
-#           clip = VideoFileClip(MyVideo_Path).subclip(My_start,My_End)
-#           txt_clip = ( TextClip(result_text,fontsize=50,color='white')
-#               .set_position('bottom')
-#               .set_duration(4)
-#                 )
-#           video = CompositeVideoClip([clip, txt_clip])
-#           print(OutPut_name)
-#           video.write_videofile(str(OutPut_name),fps=25)
-#           Output_Videos.append (VideoFileClip(OutPut_name))
-#           clip.close()
-#           My_Counter=My_Counter+1
-#           My_start = My_start +3
-#           My_End = My_End +3
 
-#   Result_Video = concatenate_videoclips(Output_Videos ,method='compose')
-#   Result_Video.write_videofile("Final_Video.mp4",fps=25)
 
-# # concatenate all the results clips in one Video 
+
+
+          
  
 
 
