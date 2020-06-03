@@ -136,7 +136,7 @@ And also cricket_rgb.npy
 
 `$ python evaluate_sample.py --video_path "Path_to the Video" `
 
-## Our testing results on Multiaction videos collected from different datasets
+## Our testing results on Multia-ction videos collected from different data-sets
 
 [Output_videos](https://github.com/Nadern96/kinetics-i3d/tree/master/output_videos)
 
