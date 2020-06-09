@@ -142,6 +142,6 @@ And also cricket_rgb.npy
 
 ### Model accuracy on multi-action videos
 
-![Model accuracy](https://github.com/Nadern96/kinetics-i3d/blob/master/Graph.jpeg)
+![Model accuracy](https://github.com/Nadern96/kinetics-i3d/blob/master/updated_Graph.jpeg)
 
  
